@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo
+spec:
+  selector:
+    matchLabels:
+      app: odoo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: odoo
+    spec:
+      containers:
+        - name: odoo
+          image: "{{ .Values.odoo.image.name }}:{{ .Values.odoo.image.tag }}"
+          imagePullPolicy: {{ .Values.odoo.image.pullPolicy | default "Always" }}
+          ports:
+            - containerPort: 8069
+          env:
+          - name: HOST
+            value: "{{ .Values.odoo.postgresqlHost }}"
+          - name: USER
+            value: "{{ .Values.odoo.postgresqlUsername }}"
+          - name: PASSWORD
+            value: "{{ .Values.odoo.postgresqlPassword }}"                        
+      initContainers:
+        - name: init-mydb
+          image: busybox:1.28
+          command: ['sh', '-c', "until nc -zv -w 1 {{ .Values.odoo.postgresqlHost }} 5432; do sleep 1; done"]
