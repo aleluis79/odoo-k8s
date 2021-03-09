@@ -1,8 +1,9 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: odoo
 spec:
+  serviceName: "odoo"
   selector:
     matchLabels:
       app: odoo
@@ -24,8 +25,35 @@ spec:
           - name: USER
             value: "{{ .Values.odoo.postgresqlUsername }}"
           - name: PASSWORD
-            value: "{{ .Values.odoo.postgresqlPassword }}"                        
-      initContainers:
-        - name: init-mydb
-          image: busybox:1.28
-          command: ['sh', '-c', "until nc -zv -w 1 {{ .Values.odoo.postgresqlHost }} 5432; do sleep 1; done"]
+            value: "{{ .Values.odoo.postgresqlPassword }}"
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/odoo
+          - name: odoo-addons
+            mountPath: /var/lib/odoo/addons/13.0
+          - name: odoo-extra-addons
+            mountPath: /mnt/extra-addons
+      volumes:
+        - name: config-volume
+          configMap:
+            # Provide the name of the ConfigMap containing the files you want
+            # to add to the container
+            name: odoo-config
+            items:
+            - key: config
+              path: odoo.conf
+  volumeClaimTemplates:
+  - metadata:
+      name: odoo-addons
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 3Gi
+  - metadata:
+      name: odoo-extra-addons
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 3Gi
