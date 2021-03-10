@@ -28,7 +28,8 @@ spec:
             value: "{{ .Values.odoo.postgresqlPassword }}"
           volumeMounts:
           - name: config-volume
-            mountPath: /etc/odoo
+            mountPath: /etc/odoo/odoo.conf
+            subPath: odoo.conf
           - name: odoo-addons
             mountPath: /var/lib/odoo/addons/13.0
           - name: odoo-extra-addons
@@ -36,12 +37,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            # Provide the name of the ConfigMap containing the files you want
-            # to add to the container
             name: odoo-config
-            items:
-            - key: config
-              path: odoo.conf
   volumeClaimTemplates:
   - metadata:
       name: odoo-addons
